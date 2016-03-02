@@ -1,4 +1,20 @@
 #!/bin/sh
+# Call all necessary functions for setting up a CA and an intermediate CA. The
+# CA has a private key and signs an intermediate CA one. It is then used in
+# the certificate signing process.
+
+if [[ $# -gt 0 ]]; then
+    if [[ "x$1" == "x-h" || "x$1" == "x--help" ]]; then
+cat << EOF
+Call all necessary functions for setting up a CA and an intermediate CA. The
+CA has a private key and signs an intermediate CA one. It is then used in
+the certificate signing process.
+EOF
+        echo "Usage: $0 [-h|--help]"
+        echo "  -h, --help     Display this message."
+        exit
+    fi
+fi
 
 function print_info()
 {
