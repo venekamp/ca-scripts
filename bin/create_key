@@ -1,0 +1,22 @@
+#!/bin/sh
+
+DIR=$(pwd)
+CONFIG_DIR="$DIR/config"
+source $CONFIG_DIR/globals
+
+if [ "$#" -ne 2 ]
+then
+	echo "Usage: $0 [key output file] [key length]"
+	exit -1
+fi
+
+KEY_FILE=$1
+KEY_LENGTH=$2
+
+if okay_to_create_file "$KEY_FILE" "\033[93m$KEY_FILE \033[97malready exists. Do you want to create a new one?" "n"
+then
+	openssl genrsa -aes256 -out $KEY_FILE $KEY_LENGTH
+fi
+
+chmod 400 $KEY_FILE
+

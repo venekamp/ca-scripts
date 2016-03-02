@@ -1,0 +1,13 @@
+#!/bin/sh
+
+DIR=$(pwd)
+CONFIG_DIR="$DIR/config"
+source $CONFIG_DIR/globals
+
+if okay_to_create_file $INTERMEDIATE_CA_CSR_FILE "\033[97mIntermediate certificate signing request found \033[93m($INTERMEDIATE_CA_CSR_FILE)\033[97m. Do you want to create a new one?" "n"
+then
+	openssl req -config $INTERMEDIATE_CA_OPENSSL_CONFIG -new -sha256 \
+		    -key $INTERMEDIATE_CA_PRIVATE_KEY \
+		    -out $INTERMEDIATE_CA_CSR_FILE
+fi
+

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+INTERMEDIATE_CA_KEY=intermediate/private/intermediate.key.pem
+INTERMEDIATE_CA_KEY_LENGTH=4096
+
+create_key $INTERMEDIATE_CA_KEY $INTERMEDIATE_CA_KEY_LENGTH
+

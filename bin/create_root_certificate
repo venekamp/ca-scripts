@@ -1,0 +1,37 @@
+#!/bin/sh
+
+DIR=$(pwd)
+CONFIG_DIR="$DIR/config"
+source $CONFIG_DIR/globals
+
+create_certificate "Root CA" $ROOT_CA_CERT $ROOT_CA_KEY openssl.cnf
+
+#if [[ -e $ROOT_CA_CERT ]]
+#then
+#	echo "Root CA certificate \033[93m($ROOT_CA_CERT)\033[97m already exists. Do you want to create a new one? [y/N] \c"
+#	read ans
+#	echo "\033[39m\c"
+#
+#	if [ -n "$ans" ] && [ $(echo "$ans" | awk '{print toupper($0)}') == "Y" ]
+#        then
+#		chmod u+w $KEY_FILE
+#		create_cert="yes"
+#	fi
+#else
+#	create_cert="yes"
+#fi
+#
+#if [ ! -z "$create_cert" ]
+#then
+#	D1=$(date '+%s')
+#	D2=$(date -jnu -f '%s' -v+$ROOT_CA_VALIDITY "$D1" '+%s')
+#	END_DATE=$(date -jnu -f '%s' $D2 '+%+')
+#
+#	DAYS=$(get_date_difference_in_days "$D1" "$D2")
+#
+#	echo "\033[90mRoot CA will be valid for \033[93m$DAYS days\033[90m (ends on: $END_DATE)\033[39m"
+#
+#	openssl req -config openssl.cnf -key private/ca.key.pem -new -x509 -days $DAYS -sha256 -extensions v3_ca -out $ROOT_CA_CERT
+#	
+#	chmod 444 $ROOT_CA_CERT
+#fi

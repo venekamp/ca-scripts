@@ -1,0 +1,10 @@
+#!/bin/sh
+
+source config/globals
+
+for i in $ROOT_CA_DIRS $ROOT_CA_FILES $INTERMEDIATE_CA_PATH
+do
+	rm -rf $i
+done
+
+rm -f *.old *.attr

@@ -1,0 +1,98 @@
+#!/bin/sh
+
+DIR=$(pwd)
+CONFIG_DIR="$DIR/config"
+source $CONFIG_DIR/globals
+
+#  Create a number of directoryies. Create only when directory does not
+#  exist. Change the permissions on the file to 750, except when the
+#  directory is called 'private', in which case the permissions are set
+#  to 700.
+function create_dirs()
+{
+	DIRS=$1
+	for dir in $DIRS
+	do
+		[[ ! -e "$dir" ]] && mkdir "$dir"
+		if [ "$dir" != "private" ]
+		then
+			PERMISSIONS="750"
+		else
+			PERMISSIONS="700"
+		fi
+
+		chmod "$PERMISSIONS" "$dir"
+	done
+}
+
+
+# Create a number of empty files and set the permissions to 600.
+function create_files ()
+{
+	FILES="$1"
+	for file in "$FILES"
+	do
+		[[ ! -e "$file" ]] && touch $file
+		chmod 600 $file
+	done
+}
+
+
+# Create a file containing a number and set its permissions to 600
+function create_file_with_contents()
+{
+	[[ ! -e "$1" ]] && echo "$2" > "$1"
+	chmod 600 "$1"
+}
+
+
+#  Copy an openssl.cnf file to the current directory. While copying correct
+#  a variable inside the config to match the current directory.
+function copy_config()
+{
+	CONFIG_TEMPL=$1
+	CONFIG_DEST=$2
+
+	CONFIG_PATH=$(dirname $CONFIG_DEST)
+
+	if [[ "$CONFIG_PATH" != "." ]]
+	then
+		CONFIG_PATH="$(pwd)/$CONFIG_PATH"
+	else
+		CONFIG_PATH="$(pwd)"
+	fi
+
+	cat "$CONFIG_TEMPL" | sed -e "s|\(^dir *= \)\(.*\)|\1$CONFIG_PATH|" > "$CONFIG_DEST"
+	chmod 600 $CONFIG_DEST
+}
+
+
+#  All the necessary steps to create the file sticture for the root CA
+function initialize_root_ca()
+{
+	create_dirs "$ROOT_CA_DIRS"
+	create_files $ROOT_CA_INDEX
+	create_file_with_contents $ROOT_CA_SERIAL $ROOT_CA_SERIAL_START
+	copy_config $ROOT_CA_OPENSSL_CONFIG_TEMPL $ROOT_CA_OPENSSL_CONFIG
+}
+
+
+#  All the necessary steps to create the file structue for the intermediate CA
+function initialize_intermediate_ca()
+{
+	[[ ! -e $INTERMEDIATE_CA_PATH ]] && mkdir $INTERMEDIATE_CA_PATH
+	chmod 750 $INTERMEDIATE_CA_PATH
+
+	create_dirs "$INTERMEDIATE_CA_DIRS"
+	create_files $INTERMEDIATE_CA_INDEX
+	create_file_with_contents $INTERMEDIATE_CA_SERIAL $INTERMEDIATE_CA_SERIAL_START
+	create_file_with_contents $INTERMEDIATE_CA_CRLNUMBER $INTERMEDIATE_CA_CRLNUMBER_START
+	copy_config $INTERMEDIATE_CA_OPENSSL_CONFIG_TEMPL $INTERMEDIATE_CA_OPENSSL_CONFIG
+}
+
+
+#  Create a file structure for a root CA. Below the root CA an intermediate CA
+#  is created. The intermediate CA does the signing of csr.
+initialize_root_ca
+initialize_intermediate_ca
+
