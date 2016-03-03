@@ -1,9 +1,28 @@
 #!/bin/sh
-# Call all necessary functions for setting up a CA and an intermediate CA. The
-# CA has a private key and signs an intermediate CA one. It is then used in
-# the certificate signing process.
+#
+#    <one line to give the program's name and a brief idea of what it does.>
+#    Copyright (C) <year>  <name of author>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#=============================================================================
+# Call all necessary functions for setting up a CA and an intermediate CA.
+# The CA has a private key and signs an intermediate CA one. It is then used
+# in the certificate signing process.
+#
 
-if [[ $# -gt 0 ]]; then
+if [[ "$#" -gt 0 ]]; then
     if [[ "x$1" == "x-h" || "x$1" == "x--help" ]]; then
 cat << EOF
 Call all necessary functions for setting up a CA and an intermediate CA. The
@@ -12,6 +31,10 @@ the certificate signing process.
 EOF
         echo "Usage: $0 [-h|--help]"
         echo "  -h, --help     Display this message."
+        echo "  --license      Display the license."
+        exit
+    elif [[ "x$1" = "x--license" ]]; then
+        cat LICENSE
         exit
     fi
 fi
@@ -21,6 +44,13 @@ function print_info()
 	echo
 	echo "\033[97m$1\033[39m"
 }
+
+echo "\033[90m\c"
+echo "'${0##*/}' Copyright (C) 2016, Gerben Venekamp"
+echo "This program comes with ABSOLUTELY NO WARRANTY."
+echo "This is free software, and you are welcome to redistribute it under"
+echo "certain conditions; type '${0##*/} --license' for details."
+echo "\033[39m\c"
 
 print_info "Initialize directory structure"
 ca_initialize
