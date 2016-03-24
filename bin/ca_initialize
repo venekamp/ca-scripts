@@ -39,6 +39,7 @@ function create_files ()
 
 
 # Create a file containing a number and set its permissions to 600
+# In case the file already exists, it contents is not overwritten.
 function create_file_with_contents()
 {
 	[[ ! -e "$1" ]] && echo "$2" > "$1"
@@ -52,6 +53,9 @@ function copy_config()
 {
 	CONFIG_TEMPL=$1
 	CONFIG_DEST=$2
+
+    [[ ! -e "$CONFIG_TEMPL" ]] && echo "copy_config: missing input file: '$CONFIG_TEMPL'" && return
+    [[ -e "$CONFIG_DEST" ]] && echo "copy_config: ouput file exists, leaving it unchanged: '$CONFIG_DEST'" && return
 
 	CONFIG_PATH=$(dirname $CONFIG_DEST)
 

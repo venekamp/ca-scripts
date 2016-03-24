@@ -17,16 +17,16 @@ if [ -z "$D1" ]
 then
 	missing_certificate "$ROOT_CA_CERT"
 
-	exit 1
+	exit -1
 fi
 
 if [ -z "$D2" ]
 then
 	missing_certificate "$INTERMEDIATE_CA_CERT"
 
-	exit 1
+	exit -1
 fi
-	
+
 if [[ "$D3" -lt "$D1" ]] || [[ "$D3" -lt "$D2" ]]
 then
 	if [[ -n "$D3" ]]
@@ -37,7 +37,6 @@ then
 	[ -e "$INTERMEDIATE_CA_CACHAIN_CERT" ] && chmod u+w $INTERMEDIATE_CA_CACHAIN_CERT
 
 	cat $INTERMEDIAET_CA_CERT $ROOT_CA_CERT > $INTERMEDIATE_CA_CACHAIN_CERT
-
 
 	chmod 444 $INTERMEDIATE_CA_CACHAIN_CERT
 fi

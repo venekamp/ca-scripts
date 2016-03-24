@@ -1,6 +1,10 @@
 certs/
 index.txt
+index.txt.attr
+index.txt.old
 intermediate/
 openssl.cnf
 private/
 serial
+serial.old
+newcerts/

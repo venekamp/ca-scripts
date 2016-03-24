@@ -2,7 +2,9 @@
 # Remove all files and directories that the scripts have created. Start with
 # a clean state.
 
-source config/globals
+DIR=$(pwd)
+CONFIG_DIR="$DIR/config"
+source $CONFIG_DIR/globals
 
 verbose=false
 
@@ -25,17 +27,22 @@ fi
 
 for i in $ROOT_CA_DIRS $ROOT_CA_FILES $INTERMEDIATE_CA_PATH
 do
-    if [[ "$verbose" == true && -e "$i" ]]; then
-        echo "Removing $i\c"
+    if [[ -e "$i" ]]; then
+        if [[ "$verbose" == true ]]; then
+            echo "Removing $i\c"
 
-        if [ -d "$i" ]; then
-            echo "/\c";
+            if [ -d "$i" ]; then
+                echo "/\c";
+            fi
+
+            echo
         fi
 
-        echo
+	    rm -rf $i
     fi
-
-	rm -rf $i
 done
 
-rm -f *.old *.attr
+for i in *.old *.attr
+do
+   rm -f $i
+done

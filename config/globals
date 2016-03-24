@@ -1,19 +1,33 @@
-ROOT_CA_CERTS_DIR=certs
-ROOT_CA_CRL_DIR=crl
-ROOT_CA_NEWCERTS_DIR=newcerts
-ROOT_CA_PRIVATE_DIR=private
+CONFIG_DIR=config
+
+# Root CA directories
+ROOT_CA_CERTS_DIR="certs"
+ROOT_CA_CRL_DIR="crl"
+ROOT_CA_NEWCERTS_DIR="newcerts"
+ROOT_CA_PRIVATE_DIR="private"
 ROOT_CA_DIRS="$ROOT_CA_CERTS_DIR $ROOT_CA_CRL_DIR $ROOT_CA_NEWCERTS_DIR $ROOT_CA_PRIVATE_DIR"
+
+# Root CA files
 ROOT_CA_INDEX="index.txt"
 ROOT_CA_SERIAL="serial"
-ROOT_CA_SERIAL_START="1000"
 ROOT_CA_OPENSSL_CONFIG="openssl.cnf"
-ROOT_CA_OPENSSL_CONFIG_TEMPL="config/openssl_root.cnf"
 ROOT_CA_FILES="$ROOT_CA_INDEX $ROOT_CA_SERIAL $ROOT_CA_OPENSSL_CONFIG"
+
+# Root CA config file
+ROOT_CA_OPENSSL_CONFIG_TEMPL="$CONFIG_DIR/openssl_root.cnf"
+
+# First serial number to use whn generating root certificates
+ROOT_CA_SERIAL_START="1000"
+
+# Validity length of the root certificate
+ROOT_CA_OPENSSL_EXTENSION=v3_ca
 ROOT_CA_VALIDITY="20y"
-ROOT_CA_CERT=$ROOT_CA_CERTS_DIR/ca.cert.pem
-ROOT_CA_KEY=$ROOT_CA_PRIVATE_DIR/ca.key.pem 
+ROOT_CA_KEY_LENGTH="4096"
+ROOT_CA_KEY="$ROOT_CA_PRIVATE_DIR/ca.key.pem"
+ROOT_CA_CERT="$ROOT_CA_CERTS_DIR/ca.cert.pem"
 
 
+# Intermediate CA directories
 INTERMEDIATE_CA_PATH="intermediate"
 INTERMEDIATE_CA_CERTS_DIR="$INTERMEDIATE_CA_PATH/certs"
 INTERMEDIATE_CA_CRL_DIR="$INTERMEDIATE_CA_PATH/crl"
@@ -21,64 +35,72 @@ INTERMEDIATE_CA_CSR_DIR="$INTERMEDIATE_CA_PATH/csr"
 INTERMEDIATE_CA_NEWCERTS_DIR="$INTERMEDIATE_CA_PATH/newcerts"
 INTERMEDIATE_CA_PRIVATE_DIR="$INTERMEDIATE_CA_PATH/private"
 INTERMEDIATE_CA_DIRS="$INTERMEDIATE_CA_CERTS_DIR $INTERMEDIATE_CA_CRL_DIR $INTERMEDIATE_CA_CSR_DIR $INTERMEDIATE_CA_NEWCERTS_DIR $INTERMEDIATE_CA_PRIVATE_DIR"
-INTERMEDIATE_CA_CSR_FILE="$INTERMEDIATE_CA_CSR_DIR/intermediate.csr.pem"
+
+# Intermediate CA files
+INTERMEDIATE_CA_CSR="$INTERMEDIATE_CA_CSR_DIR/intermediate.csr.pem"
 INTERMEDIATE_CA_CRLNUMBER="$INTERMEDIATE_CA_PATH/crlnumber"
-INTERMEDIATE_CA_CRLNUMBER_START="1000"
 INTERMEDIATE_CA_INDEX="$INTERMEDIATE_CA_PATH/index.txt"
 INTERMEDIATE_CA_SERIAL="$INTERMEDIATE_CA_PATH/serial"
+INTERMEDIATE_CA_OPENSSL_CONFIG="$INTERMEDIATE_CA_PATH/openssl_intermediate.cnf"
+INTERMEDIATE_CA_FILES="$INTERMEDIATE_CA_CSR $INTERMEDIATE_CA_CRLNUMBER $INTERMEDIATE_CA_INDEX $INTERMEDIATE_CA_SERIAL"
+
+# Intetermediate CA confg file
+INTERMEDIATE_CA_OPENSSL_CONFIG_TEMPL="$CONFIG_DIR/openssl_intermediate.cnf"
+
+# First serial number to use when generating intermediate certificates
+INTERMEDIATE_CA_OPENSSL_EXTENSION=v3_intermediate_ca
 INTERMEDIATE_CA_SERIAL_START="1000"
-INTERMEDIATE_CA_OPENSSL_CONFIG="$INTERMEDIATE_CA_PATH/openssl.cnf"
-INTERMEDIATE_CA_OPENSSL_CONFIG_TEMPL="config/openssl_intermediate.cnf"
-INTERMEDIATE_CA_FILES="$INTERMEDIATE_CRL $INTERMEDIATE_CA_INDEX $INTERMEDIATE_CA_SERIAL $INTERMEDIATE_CA_OPENSSL_CONFIG"
+INTERMEDIATE_CA_CRLNUMBER_START="1000"
+
 INTERMEDIATE_CA_VALIDITY=10y
-INTERMEDIATE_CA_PRIVATE_KEY="$INTERMEDIATE_CA_PRIVATE_DIR/intermediate.key.pem"
+INTERMEDIATE_CA_KEY="$INTERMEDIATE_CA_PRIVATE_DIR/intermediate.key.pem"
 INTERMEDIATE_CA_CERT="$INTERMEDIATE_CA_CERTS_DIR/intermediate.cert.pem"
 INTERMEDIATE_CA_CSR="$INTERMEDIATE_CA_CSR_DIR/intermediate.csr.pem"
 INTERMEDIATE_CA_CACHAIN_CERT="$INTERMEDIATE_CA_CERTS_DIR/ca-chain.cert.pem"
 
 function get_date_difference_in_days()
 {
-	start_date=$1
-	end_date=$2
+    start_date=$1
+    end_date=$2
 
-	date_difference_in_epoch=$(( $end_date - $start_date ))
-	date_difference_in_days=$(( $date_difference_in_epoch / 86400 ))
+    date_difference_in_epoch=$(( $end_date - $start_date ))
+    date_difference_in_days=$(( $date_difference_in_epoch / 86400 ))
 
-	echo $date_difference_in_days
+    echo $date_difference_in_days
 }
 
 function okay_to_create_file()
 {
-	FILE=$1
-	MSG=$2
-	DEFAULT_ANS=$3
+    FILE=$1
+    MSG=$2
+    DEFAULT_ANS=$3
 
-	if [[ "$DEFAULT_ANS" == "y" ]]
-	then
-		MSG="$MSG (Y/n) "
-	else
-		MSG="$MSG (y/N) "
-	fi
+    if [[ "$DEFAULT_ANS" == "y" ]]
+    then
+        MSG="$MSG (Y/n) "
+    else
+        MSG="$MSG (y/N) "
+    fi
 
-	if [[ -e $FILE ]]
-	then
-		echo "$MSG\c"
-		read ans
-		echo "\033[39m\c"
+    if [[ -e $FILE ]]
+    then
+        echo "$MSG\c"
+        read ans
+        echo "\033[39m\c"
 
-		if [ -z "$ans" ]
-		then
-			ans=$DEFAULT_ANS
-		fi
+        if [ -z "$ans" ]
+        then
+            ans=$DEFAULT_ANS
+        fi
 
-		if [ $(echo "$ans" | awk '{print toupper($0)}') == "Y" ]
-		then
-			chmod u+w $FILE
-			return 0
-		fi
-	else
-		return 0
-	fi
+        if [ $(echo "$ans" | awk '{print toupper($0)}') == "Y" ]
+        then
+            chmod u+w $FILE
+            return 0
+        fi
+    else
+        return 0
+    fi
 
-	return 1
+    return 1
 }

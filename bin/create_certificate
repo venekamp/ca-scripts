@@ -1,47 +1,61 @@
 #!/bin/sh
 
-if [ "$#" -ne 4 ]
-then
-	echo "Usage: $0 [cert type] [certificate] [key] [config]"
-	exit -1
-fi
-
 DIR=$(pwd)
 CONFIG_DIR="$DIR/config"
 source $CONFIG_DIR/globals
 
-CERT_TYPE=$1
-CERTIFICATE_FILE=$2
-KEY_FILE=$3
-CONFIG_FILE=$4
+case "$#" in
+    5)
+        CERT_NAME="Root CA"
+        CERT_TYPE="r"
+        ;;
+    6)
+        CERT_NAME="Intermediate CA"
+        CSR=$6
+        CERT_TYPE="i"
+        ;;
+    *)
+        echo "Usage: ${0##/} [certificate] [key] [config] [days | years] [extension] | [csr]"
 
-if [[ -e $CERTIFICATE_FILE ]]
+        exit -1
+        ;;
+esac
+
+CERTIFICATE=$1
+KEY=$2
+CONFIG=$3
+VALIDITY=$4
+EXTENSION=$5
+
+if [[ -e $CERTIFICATE ]]
 then
-        echo "\033[97m$CERT_TYPE certificate \033[93m($CERTIFICATE_FILE)\033[97m already exists. Do you want to create a new one? [y/N] \c"
-	read ans
-	echo "\033[39m\c"
+    echo "\033[97m$CERT_NAME certificate \033[93m($CERTIFICATE)\033[97m already exists. Do you want to create a new one? [y/N] \c"
+    read ans
+    echo "\033[39m\c"
 
-	if [ -n "$ans" ] && [ $(echo "$ans" | awk '{print toupper($0)}') == "Y" ]
-	then
-		chmod u+w $CERTIFICATE_FILE
-		create_cert="yes"
-	 fi
-else
-	create_cert="yes"
+    if [ -n "$ans" ] && [ $(echo "$ans" | awk '{print toupper($0)}') == "Y" ]
+    then
+        chmod u+w $CERTIFICATE
+    else
+        exit 0
+    fi
 fi
 
-if [ ! -z "$create_cert" ]
-then
-	D1=$(date '+%s')
-	D2=$(date -jnu -f '%s' -v+$ROOT_CA_VALIDITY "$D1" '+%s')
-	END_DATE=$(date -jnu -f '%s' $D2 '+%+')
+D1=$(date '+%s')
+D2=$(date -jnu -f '%s' -v+$VALIDITY "$D1" '+%s')
+END_DATE=$(date -jnu -f '%s' $D2 '+%+')
 
-	DAYS=$(get_date_difference_in_days "$D1" "$D2")
+DAYS=$(get_date_difference_in_days "$D1" "$D2")
 
-	echo "\033[90m$CERT_TYPE will be valid for \033[93m$DAYS days\033[90m (ends on: $END_DATE)\033[39m"
+echo "\033[90m$CERT_NAME will be valid for \033[93m$DAYS days\033[90m (ends on: $END_DATE)\033[39m"
 
-	openssl req -config $CONFIG_FILE -key $KEY_FILE -new -x509 -days $DAYS -sha256 -extensions v3_ca -out $CERTIFICATE_FILE
+case $CERT_TYPE in
+    r)
+        openssl req -config $CONFIG -key $KEY -new -x509 -days $DAYS -sha256 -extensions $EXTENSION -out $CERTIFICATE
+        ;;
+    i)
+        openssl ca -config $CONFIG -extensions $EXTENSION -days $DAYS -notext -md sha256 -in $CSR -out $CERTIFICATE
+        ;;
+esac
 
-	chmod 444 $CERTIFICATE_FILE
-fi
-
+chmod 444 $CERTIFICATE
