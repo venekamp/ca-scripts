@@ -54,6 +54,7 @@ echo "\033[39m\c"
 
 print_info "Initialize directory structure"
 ca_initialize
+[[ "$?" == 1 ]] && exit
 
 print_info "Create Root CA key"
 create_root_key
