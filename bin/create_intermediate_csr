@@ -1,7 +1,0 @@
-#!/bin/sh
-
-DIR=$(pwd)
-CONFIG_DIR="$DIR/config"
-source $CONFIG_DIR/globals
-
-openssl req -config $INTERMEDIATE_CA_OPENSSL_CONFIG -new -sha256 -key $INTERMEDIATE_CA_KEY -out $INTERMEDIATE_CA_CSR

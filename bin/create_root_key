@@ -1,7 +1,0 @@
-#!/bin/sh
-
-DIR=$(pwd)
-CONFIG_DIR="$DIR/config"
-source $CONFIG_DIR/globals
-
-create_key $ROOT_CA_KEY $ROOT_CA_KEY_LENGTH

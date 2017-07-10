@@ -1,7 +1,0 @@
-#!/bin/sh
-
-DIR=$(pwd)
-CONFIG_DIR="$DIR/config"
-source $CONFIG_DIR/globals
-
-create_certificate $ROOT_CA_CERT $ROOT_CA_KEY $ROOT_CA_OPENSSL_CONFIG $ROOT_CA_VALIDITY $ROOT_CA_OPENSSL_EXTENSION
