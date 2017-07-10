@@ -1,10 +1,4 @@
-certs/
-index.txt
-index.txt.attr
-index.txt.old
-intermediate/
-openssl.cnf
-private/
-serial
-serial.old
-newcerts/
+__pycache__
+virtenvs
+ca.egg-info
+*.pyc
