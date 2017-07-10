@@ -1,0 +1,4 @@
+-e git+git@github.com:venekamp/ca-scripts.git@8cf1752ee7830272d859f1b1e38d255a4ddfd5b8#egg=ca&subdirectory=../../ca-scripts
+click==6.7
+Jinja2==2.9.6
+MarkupSafe==1.0
