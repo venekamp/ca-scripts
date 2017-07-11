@@ -1,5 +1,6 @@
 import click
 import os
+import pkg_resources
 
 from classes.ca import CA
 
@@ -100,6 +101,17 @@ def create_intermediate_certificate():
     """
     ca = CA(rootDir, ca_globals)
     ca.createIntermediateCertificate()
+
+
+@ca.command()
+def version():
+    """
+      Show the version and exit.
+    """
+    project_name = pkg_resources.require("ca")[0].project_name
+    version      = pkg_resources.require("ca")[0].version
+
+    click.echo(project_name + ", version " + version)
 
 
 if __name__ == "__main__":
