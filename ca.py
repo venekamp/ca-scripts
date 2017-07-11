@@ -47,9 +47,12 @@ def ca(verbose, root_dir):
 
 @ca.command(name='init')
 @click.option('--serial-number', type=int, default=1000,
+              metavar="<int>",
               help="Specify what the initial serial number should be.")
-@click.argument('root-config-file', type=click.Path(exists=True))
-@click.argument('intermediate-config-file', type=click.Path(exists=True))
+@click.argument('root-config-file', type=click.Path(exists=True),
+                metavar="<root_config_file>")
+@click.argument('intermediate-config-file', type=click.Path(exists=True),
+                metavar="<intermediate_config_file>")
 def ca_init(serial_number, root_config_file, intermediate_config_file):
     """
       Create a root directory if it does not exist and populate it. The
