@@ -20,32 +20,33 @@ class CA():
         'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 }
     }
 
-
     def __init__(self, rootDir, ca_globals):
         #  Add the root diretory to all paths
         for key, value in self.subdirs.items():
             value['path'] = rootDir + value['path']
 
+        subdirs = self.subdirs
+
         self.rootConfigFile              = rootDir + '/openssl.config'
         self.rootIndex                   = rootDir + '/index.txt'
-        self.rootKey                     = self.subdirs['root_private']['path'] + '/ca-key.pem'
+        self.rootSerialFile              = rootDir + '/serial'
+        self.rootKey                     = subdirs['root_private']['path'] + '/ca-key.pem'
         self.rootKeyLength               = 4096
-        self.rootCertificateFile         = self.subdirs['root_certs']['path'] + '/ca-certificate.pem'
+        self.rootCertificateFile         = subdirs['root_certs']['path'] + '/ca-certificate.pem'
 
-        self.intermediateConfigFile      = self.subdirs['root_intermediate']['path'] + '/openssl.config'
+        self.intermediateConfigFile      = subdirs['root_intermediate']['path'] + '/openssl.config'
         self.intermediateIndex           = rootDir + '/index.txt'
-        self.intermediateKey             = self.subdirs['intermediate_private']['path'] + '/inrermediate-key.pem'
+        self.intermediateSerialFile      = subdirs['root_intermediate']['path'] + '/serial'
+        self.intermediateKey             = subdirs['intermediate_private']['path'] + '/inrermediate-key.pem'
         self.intermediateKeyLength       = 4096
-        self.intermediateCertificateFile = self.subdirs['intermediate_certs']['path'] + '/intermediate.pem'
-        self.intermediateCSR             = self.subdirs['intermediate_csr']['path'] + '/intermediate-csr.pem'
+        self.intermediateCertificateFile = subdirs['intermediate_certs']['path'] + '/intermediate.pem'
+        self.intermediateCSR             = subdirs['intermediate_csr']['path'] + '/intermediate-csr.pem'
 
-        self.CAcertificateChain          = self.subdirs['intermediate_certs']['path'] + '/ca-chain-cert.pem'
+        self.CAcertificateChain          = subdirs['intermediate_certs']['path'] + '/ca-chain-cert.pem'
 
         self.verbose                     = ca_globals['verbose']
         self.rootDir                     = rootDir
-        self.rootSerialFile              = rootDir + ca_globals['rootSerialFile']
-        self.intermediateSerialFile      = rootDir + ca_globals['intermediateSerialFile']
-        self.intermediateDir             = self.subdirs['root_intermediate']['path']
+        self.intermediateDir             = subdirs['root_intermediate']['path']
 
 
     def init(self, rootConfigTemplate, intermediateConfigTemplate,

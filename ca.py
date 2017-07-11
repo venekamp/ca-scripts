@@ -5,34 +5,7 @@ import pkg_resources
 from classes.ca import CA
 
 
-subdirs = {
-    'root_certs':            { 'path': "/certs",                 'mode': 0o750 },
-    'root_crl':              { 'path': "/crl",                   'mode': 0o750 },
-    'root_newcerts':         { 'path': "/newcerts",              'mode': 0o750 },
-    'root_private':          { 'path': "/private",               'mode': 0o700 },
-    'root_intermediate':     { 'path': "/intermediate",          'mode': 0o750 },
-    'intermediate_certs':    { 'path': "/intermediate/certs",    'mode': 0o750 },
-    'intermediate_crl':      { 'path': "/intermediate/crl",      'mode': 0o750 },
-    'intermediate_csr':      { 'path': "/intermediate/csr",      'mode': 0o750 },
-    'intermediate_newcerts': { 'path': "/intermediate/newcerts", 'mode': 0o750 },
-    'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 }
-}
-
-"""Dictionary for keeping track of global variables."""
-ca_globals = {
-    'subdirs':                subdirs,
-    'rootSerialFile':         '/serial',
-    'rootConfig':             '/openssl.config',
-    'rootKey':                subdirs['root_private']['path'] + '/ca-key.pem',
-    'rootCertificate':        subdirs['root_certs']['path'] + '/ca-cert.pem',
-    'intermediateSerialFile': subdirs['root_intermediate']['path'] + '/serial',
-    'intermediateConfig':     subdirs['root_intermediate']['path'] + '/openssl.config',
-    'intermediateKey':        subdirs['intermediate_private']['path'] + '/intermediate-key.pem',
-    'intermediateCSR':        subdirs['intermediate_csr']['path'] + '/intermediate-csr.pem',
-    'intermediateCert':       subdirs['intermediate_certs']['path'] + '/intermediate-cert.pem'
-}
-
-
+ca_globals = {}
 rootDir = os.path.abspath("ca")
 
 @click.group()
