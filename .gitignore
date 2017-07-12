@@ -1,4 +1,11 @@
-__pycache__
-virtenvs
+/__pycache__
+/virtenvs
 ca.egg-info
 *.pyc
+
+# Ignore all but the two config exmple files in the /config
+# direcrory
+!/config
+!/config/example/openssl_root.config
+!/config/example/openssl_intermediate.config
+/config/*
