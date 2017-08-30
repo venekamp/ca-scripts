@@ -123,9 +123,8 @@ class CA():
         """
           Create a key.
         """
-        path = Path(key)
-        if path.exists():
-            raise FileExistsError
+        if Path(key).exists():
+            raise FileExistsError(errno.ENOENT, "Root key already exists", key)
 
         if usePassPhrase:
             subprocess.run(["openssl", "genrsa",

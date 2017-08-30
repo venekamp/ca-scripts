@@ -46,7 +46,10 @@ def ca_create_root_key():
     """
     ca = getCA()
     if ca:
-        ca.createRootKey()
+        try:
+            ca.createRootKey()
+        except FileExistsError as e:
+            print (e)
 
 
 @ca.command(name='create-intermediate-key')
