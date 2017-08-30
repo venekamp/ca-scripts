@@ -49,7 +49,7 @@ def ca_create_root_key():
         try:
             ca.createRootKey()
         except FileExistsError as e:
-            print (e)
+            print(e)
 
 
 @ca.command(name='create-intermediate-key')
@@ -62,7 +62,7 @@ def ca_create_intermediate_key():
         try:
             ca.createIntermediateKey()
         except FileExistsError as e:
-            print (e)
+            print(e)
 
 
 @ca.command(name='create-root-certificate')
@@ -85,7 +85,18 @@ def create_intermediate_certificate():
         ca.createIntermediateCertificate()
 
 
-@ca.command()
+@ca.command(name='create-key')
+@click.argument('fqdn')
+def create_domain_key(fqdn):
+    ca = getCA()
+    if ca:
+        try:
+            ca.createDomainKey(fqdn)
+        except:
+            print(e)
+
+
+ca.command()
 def version():
     """
       Show the version and exit.

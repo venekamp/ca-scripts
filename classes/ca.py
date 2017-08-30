@@ -268,3 +268,8 @@ class CA():
         with open(src, "rb") as f:
             shutil.copyfileobj(f, out)
         f.close()
+
+
+    def createDomainKey(self, fqdn):
+        key = self.intermediatePrivate + fqdn
+        self.createKey(key, 2048, False)
