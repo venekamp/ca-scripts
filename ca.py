@@ -35,7 +35,7 @@ def ca_init(serial_number, root_config_file, intermediate_config_file):
       Args:\n
           CONFIG_FILE: path to the the configuration file of the root CA.
     """
-    ca = CA(rootDir, ca_globals)
+    ca = CA(rootDir, ca_globals, True)
     ca.init(root_config_file, intermediate_config_file, serial_number)
 
 
@@ -44,8 +44,9 @@ def ca_create_root_key():
     """
       Create a private key for the usage of the CA.
     """
-    ca = CA(rootDir, ca_globals)
-    ca.createRootKey()
+    ca = getCA()
+    if ca:
+        ca.createRootKey()
 
 
 @ca.command(name='create-intermediate-key')
@@ -53,9 +54,9 @@ def ca_create_intermediate_key():
     """
       Create a private key for the usage of the CA.
     """
-    ca = CA(rootDir, ca_globals)
-    ca.createIntermediateKey()
-
+    ca = getCA()
+    if ca:
+        ca.createIntermediateKey()
 
 
 @ca.command(name='create-root-certificate')
@@ -63,8 +64,9 @@ def ca_create_root_certificate():
     """
       Create the root certificate for the CA.
     """
-    ca = CA(rootDir, ca_globals)
-    ca.createRootCertificate()
+    ca = getCA()
+    if ca:
+        ca.createRootCertificate()
 
 
 @ca.command(name='create-intermediate-certificate')
@@ -72,8 +74,9 @@ def create_intermediate_certificate():
     """
       Create a signed intermediate crtificate.
     """
-    ca = CA(rootDir, ca_globals)
-    ca.createIntermediateCertificate()
+    ca = getCA()
+    if ca:
+        ca.createIntermediateCertificate()
 
 
 @ca.command()
@@ -85,6 +88,16 @@ def version():
     version      = pkg_resources.require("ca")[0].version
 
     click.echo(project_name + ", version " + version)
+
+
+def getCA():
+    try:
+        ca = CA(rootDir, ca_globals)
+        return ca
+    except FileNotFoundError as e:
+        print (e)
+
+    return None
 
 
 if __name__ == "__main__":
