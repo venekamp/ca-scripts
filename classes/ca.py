@@ -124,7 +124,7 @@ class CA():
           Create a key.
         """
         if Path(key).exists():
-            raise FileExistsError(errno.ENOENT, "Root key already exists", key)
+            raise FileExistsError(errno.ENOENT, "Key already exists", key)
 
         if usePassPhrase:
             subprocess.run(["openssl", "genrsa",
@@ -139,7 +139,10 @@ class CA():
 
 
     def createRootKey(self, usePassPhrase=True):
-        self.createKey(self.rootKey, self.rootKeyLength, usePassPhrase)
+        try:
+            self.createKey(self.rootKey, self.rootKeyLength, usePassPhrase)
+        except FileExistsError as e:
+            raise FileExistsError(e.errno, "Root key already exists", e.filename)
 
 
     def createCertificate(self, config, key, certificate, dayValid):
@@ -156,8 +159,11 @@ class CA():
 
 
     def createIntermediateKey(self, usePassPhrase=True):
-        self.createKey(self.intermediateKey, self.intermediateKeyLength,
-                       usePassPhrase)
+        try:
+            self.createKey(self.intermediateKey, self.intermediateKeyLength,
+                           usePassPhrase)
+        except FileExistsError as e:
+            raise FileExistsError(e.errno, "Intermediate key already exists", e.filename)
 
 
     def createIntermediateCertificate(self):

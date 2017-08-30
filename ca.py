@@ -59,7 +59,10 @@ def ca_create_intermediate_key():
     """
     ca = getCA()
     if ca:
-        ca.createIntermediateKey()
+        try:
+            ca.createIntermediateKey()
+        except FileExistsError as e:
+            print (e)
 
 
 @ca.command(name='create-root-certificate')
