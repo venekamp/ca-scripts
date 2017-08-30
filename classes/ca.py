@@ -2,9 +2,22 @@ import os
 import subprocess
 import click
 import shutil
+import errno
 
+from enum import Enum
 from pathlib import Path
 from jinja2 import Template
+
+
+class PathType(Enum):
+    """
+      Supports:
+          file
+          directory
+    """
+    file = 1
+    directory = 2
+
 
 class CA():
     subdirs = {
@@ -20,7 +33,7 @@ class CA():
         'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 }
     }
 
-    def __init__(self, rootDir, ca_globals):
+    def __init__(self, rootDir, ca_globals, missing_ca_dir_okay=False):
         #  Add the root diretory to all paths
         for key, value in self.subdirs.items():
             value['path'] = rootDir + value['path']
@@ -37,7 +50,7 @@ class CA():
         self.intermediateConfigFile      = subdirs['root_intermediate']['path'] + '/openssl.config'
         self.intermediateIndex           = rootDir + '/index.txt'
         self.intermediateSerialFile      = subdirs['root_intermediate']['path'] + '/serial'
-        self.intermediateKey             = subdirs['intermediate_private']['path'] + '/inrermediate-key.pem'
+        self.intermediateKey             = subdirs['intermediate_private']['path'] + '/intermediate-key.pem'
         self.intermediateKeyLength       = 4096
         self.intermediateCertificateFile = subdirs['intermediate_certs']['path'] + '/intermediate.pem'
         self.intermediateCSR             = subdirs['intermediate_csr']['path'] + '/intermediate-csr.pem'
@@ -47,6 +60,45 @@ class CA():
         self.verbose                     = ca_globals['verbose']
         self.rootDir                     = rootDir
         self.intermediateDir             = subdirs['root_intermediate']['path']
+        self.intermediatePrivate         = subdirs['intermediate_private']['path']
+
+        if not missing_ca_dir_okay:
+            self.CheckForPopulatedCAdirectory(rootDir)
+
+    def CheckForPopulatedCAdirectory(self, rootDir):
+        if not Path(rootDir).exists():
+            raise FileNotFoundError(errno.ENOENT, "Top level CA directory was not found",
+                                    rootDir)
+        try:
+            self.CheckIfFileExists(self.rootConfigFile)
+            self.CheckIfFileExists(self.rootIndex)
+            self.CheckIfFileExists(self.rootSerialFile)
+
+            self.CheckIfFileExists(self.intermediateConfigFile)
+            self.CheckIfFileExists(self.intermediateIndex)
+            self.CheckIfFileExists(self.intermediateSerialFile)
+
+            for key, value in self.subdirs.items():
+                self.CheckIfDirectoryExists(value['path'])
+
+        except ValueError as e:
+            print (e)
+
+    def CheckIfFileExists(self, path):
+        self.CheckIfPathExists(PathType.file, path)
+
+    def CheckIfDirectoryExists(self, path):
+        self.CheckIfPathExists(PathType.directory, path)
+
+
+    def CheckIfPathExists(self, type, path):
+        if not Path(path).exists():
+            if type == PathType.file:
+                raise FileNotFoundError(errno.ENOENT, "file not found", path)
+            elif type == PathType.directory:
+                raise FileNotFoundError(errno.ENOENT, "directory not found", path)
+            else:
+                raise ValueError
 
 
     def init(self, rootConfigTemplate, intermediateConfigTemplate,
@@ -75,12 +127,16 @@ class CA():
         if path.exists():
             raise FileExistsError
 
-        subprocess.run(["openssl", "genrsa",
-                        "-aes256" if usePassPhrase else "",
-                        "-out", key, str(keyLength)],
-                        check=True)
+        if usePassPhrase:
+            subprocess.run(["openssl", "genrsa",
+                            "-aes256",
+                            "-out", key, str(keyLength)],
+                            check=True)
+        else:
+            subprocess.run(["openssl", "genrsa",
+                            "-out", key, str(keyLength)],
+                            check=True)
         os.chmod(key, 0o400)
-
 
 
     def createRootKey(self, usePassPhrase=True):
