@@ -16,6 +16,6 @@ setup(
     '''
         [console_scripts]
         ca = ca:cli
-        certificate = certificate:certificate
+        certificate = certificate:cli
     ''',
 )
