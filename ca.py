@@ -1,5 +1,6 @@
-import click
 import os
+import sys
+import click
 import pkg_resources
 
 from classes.ca import CA
@@ -13,13 +14,15 @@ rootDir = os.path.abspath("ca")
 @click.option("--root-dir", default="ca",
               help="Set root direrectory of the CA. Defaults to: ca")
 @click.version_option()
-def ca(verbose, root_dir):
-    """CA management."""
+def cli(verbose, root_dir):
+    """
+        CA management.
+    """
     ca_globals['verbose'] = verbose
     rootDir = os.path.abspath(root_dir)
 
 
-@ca.command(name='init')
+@cli.command(name='init')
 @click.option('--serial-number', type=int, default=1000,
               metavar="<int>",
               help="Specify what the initial serial number should be.")
@@ -39,7 +42,7 @@ def ca_init(serial_number, root_config_file, intermediate_config_file):
     ca.init(root_config_file, intermediate_config_file, serial_number)
 
 
-@ca.command(name='create-root-key')
+@cli.command(name='create-root-key')
 def ca_create_root_key():
     """
       Create a private key for the usage of the CA.
@@ -52,7 +55,7 @@ def ca_create_root_key():
             print(e)
 
 
-@ca.command(name='create-intermediate-key')
+@cli.command(name='create-intermediate-key')
 def ca_create_intermediate_key():
     """
       Create a private key for the usage of the CA.
@@ -65,7 +68,7 @@ def ca_create_intermediate_key():
             print(e)
 
 
-@ca.command(name='create-root-certificate')
+@cli.command(name='create-root-certificate')
 def ca_create_root_certificate():
     """
       Create the root certificate for the CA.
@@ -75,7 +78,7 @@ def ca_create_root_certificate():
         ca.createRootCertificate()
 
 
-@ca.command(name='create-intermediate-certificate')
+@cli.command(name='create-intermediate-certificate')
 def create_intermediate_certificate():
     """
       Create a signed intermediate crtificate.
@@ -85,7 +88,7 @@ def create_intermediate_certificate():
         ca.createIntermediateCertificate()
 
 
-@ca.command(name='create-key')
+@cli.command(name='create-key')
 @click.argument('fqdn')
 def create_domain_key(fqdn):
     ca = getCA()
@@ -96,15 +99,16 @@ def create_domain_key(fqdn):
             print(e)
 
 
-ca.command()
+@cli.command()
 def version():
     """
       Show the version and exit.
     """
-    project_name = pkg_resources.require("ca")[0].project_name
-    version      = pkg_resources.require("ca")[0].version
+    exec_name    = os.path.basename(sys.argv[0])
+    project_name = pkg_resources.require("ca-scripts")[0].project_name
+    version      = pkg_resources.require("ca-scripts")[0].version
 
-    click.echo(project_name + ", version " + version)
+    click.echo(exec_name + " (" + project_name + "), version " + version)
 
 
 def getCA():
