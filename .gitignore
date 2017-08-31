@@ -1,6 +1,6 @@
 /__pycache__
 /virtenvs
-ca.egg-info
+ca_scripts.egg-info
 *.pyc
 
 # Ignore all but the two config exmple files in the /config
