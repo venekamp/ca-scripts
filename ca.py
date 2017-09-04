@@ -18,8 +18,8 @@ def cli(verbose, root_dir):
     """
         CA management.
     """
-    ca_globals['verbose'] = verbose
-    rootDir = os.path.abspath(root_dir)
+    ca_globals['verbose']  = verbose
+    ca_globals['root-dir'] = os.path.abspath(root_dir)
 
 
 @cli.command(name='init')
@@ -95,7 +95,7 @@ def create_domain_key(fqdn):
     if ca:
         try:
             ca.createDomainKey(fqdn)
-        except:
+        except Exception as e:
             print(e)
 
 
@@ -122,4 +122,4 @@ def getCA():
 
 
 if __name__ == "__main__":
-    ca()
+    pass

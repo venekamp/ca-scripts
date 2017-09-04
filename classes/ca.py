@@ -20,6 +20,8 @@ class PathType(Enum):
 
 
 class CA():
+    default_root_dir = "ca"
+
     subdirs = {
         'root_certs':            { 'path': "/certs",                 'mode': 0o750 },
         'root_crl':              { 'path': "/crl",                   'mode': 0o750 },
@@ -35,20 +37,25 @@ class CA():
 
     def __init__(self, rootDir, ca_globals, missing_ca_dir_okay=False):
         #  Add the root diretory to all paths
+        if not rootDir:
+            root_dir = os.path.abspath(self.default_root_dir)
+        else:
+            root_dir = rootDir
+
         for key, value in self.subdirs.items():
-            value['path'] = rootDir + value['path']
+            value['path'] = root_dir + value['path']
 
         subdirs = self.subdirs
 
-        self.rootConfigFile              = rootDir + '/openssl.config'
-        self.rootIndex                   = rootDir + '/index.txt'
-        self.rootSerialFile              = rootDir + '/serial'
+        self.rootConfigFile              = root_dir + '/openssl.config'
+        self.rootIndex                   = root_dir + '/index.txt'
+        self.rootSerialFile              = root_dir + '/serial'
         self.rootKey                     = subdirs['root_private']['path'] + '/ca-key.pem'
         self.rootKeyLength               = 4096
         self.rootCertificateFile         = subdirs['root_certs']['path'] + '/ca-certificate.pem'
 
         self.intermediateConfigFile      = subdirs['root_intermediate']['path'] + '/openssl.config'
-        self.intermediateIndex           = rootDir + '/index.txt'
+        self.intermediateIndex           = root_dir + '/index.txt'
         self.intermediateSerialFile      = subdirs['root_intermediate']['path'] + '/serial'
         self.intermediateKey             = subdirs['intermediate_private']['path'] + '/intermediate-key.pem'
         self.intermediateKeyLength       = 4096
@@ -58,17 +65,22 @@ class CA():
         self.CAcertificateChain          = subdirs['intermediate_certs']['path'] + '/ca-chain-cert.pem'
 
         self.verbose                     = ca_globals['verbose']
-        self.rootDir                     = rootDir
+        self.rootDir                     = root_dir
         self.intermediateDir             = subdirs['root_intermediate']['path']
         self.intermediatePrivate         = subdirs['intermediate_private']['path']
 
         if not missing_ca_dir_okay:
-            self.CheckForPopulatedCAdirectory(rootDir)
+            self.CheckForPopulatedCAdirectory()
 
-    def CheckForPopulatedCAdirectory(self, rootDir):
-        if not Path(rootDir).exists():
+
+    def getIntermediateDirectory(self):
+        return self.intermediateDir
+
+
+    def CheckForPopulatedCAdirectory(self):
+        if not Path(self.rootDir).exists():
             raise FileNotFoundError(errno.ENOENT, "Top level CA directory was not found",
-                                    rootDir)
+                                    self.rootDir)
         try:
             self.CheckIfFileExists(self.rootConfigFile)
             self.CheckIfFileExists(self.rootIndex)
@@ -84,8 +96,10 @@ class CA():
         except ValueError as e:
             print (e)
 
+
     def CheckIfFileExists(self, path):
         self.CheckIfPathExists(PathType.file, path)
+
 
     def CheckIfDirectoryExists(self, path):
         self.CheckIfPathExists(PathType.directory, path)

@@ -1,32 +1,61 @@
-import sys
 import os
+import sys
 import click
 import pkg_resources
 
-#from classes.certficates import certificates
+from classes.ca import CA
+from classes.certificate import Certificate
 
-ca_globals = {}
-caDir = os.path.abspath("ca")
-certDir = os.path.abspath("client-certificates")
+
+cert_globals = {}
+
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="Set verbosity level.")
-@click.option("--ca-dir", default=caDir,
-              help="Set root direrectory of the CA. Defaults to: " + caDir)
-@click.option("--certificate-dir", default=certDir,
-              help="Set root direrectory of the certificates. Defaults to: " + certDir)
+@click.option("--ca-dir", default=CA.default_root_dir,
+              help="Set root direrectory of the CA. Defaults to: " + CA.default_root_dir)
+@click.option("--certificate-dir", default=Certificate.default_root_dir,
+              help="Set root direrectory of the certificates. Defaults to: " + Certificate.default_root_dir)
 @click.version_option()
 def cli(verbose, ca_dir, certificate_dir):
-    ca_globals['verbose'] = verbose
-    caDir = os.path.abspath(ca_dir)
+    cert_globals['verbose'] = verbose
+    cert_globals['ca-dir']  = os.path.abspath(ca_dir)
 
 
 @cli.command('create-key')
-@click.option('--root-dir', default=certDir,
+@click.option('--root-dir', default=None,
               help="Set the root directory where the keys and certificates are stored.")
+@click.option('--key-length', default=2048,
+              help="Use the specified key length.")
+@click.option('--pass-phrase/--no-pass-phrase', default=False,
+              help="Ask for a pass phrase during key generation.")
 @click.argument('fqdn')
-def create_key(root_dir, fqdn):
-    pass
+def create_key(root_dir, key_length, pass_phrase, fqdn):
+    """
+      create a private key
+    """
+    cert = Certificate(root_dir, cert_globals, fqdn)
+
+    key = cert.getKeyName()
+    cert.createKey(key, key_length, pass_phrase)
+
+
+@cli.command('create-csr')
+@click.argument('fdqn')
+@click.option('--root-dir', default=None,
+              help="Set the root directory where the keys and certificates are stored.")
+def create_csr(root_dir, fqdn):
+    """
+      Create a certificate signing request (csr)
+    """
+    cert = Certificate(root_dir, fqdn)
+
+    config = cert.getCSRName(root_dir, fqdn)
+    key    = cert.getKeyName(root_dir, fqdn)
+    csr    = cert.getCSRName(root_dir, fqdn)
+
+    cert.createCSR(config, key, csr)
+
 
 @cli.command()
 def version():
