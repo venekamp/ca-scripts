@@ -51,7 +51,7 @@ def ca_create_root_key():
       Create a private key for the usage of the CA.
     """
     try:
-        ca = getCA()
+        ca = CA(rootDir, ca_globals, True)
         ca.createRootKey()
     except FileExistsError as e:
         print(e)
@@ -63,7 +63,7 @@ def ca_create_intermediate_key():
       Create a private key for the usage of the CA.
     """
     try:
-        ca = getCA()
+        ca = CA(rootDir, ca_globals, True)
         ca.createIntermediateKey()
     except FileExistsError as e:
         print(e)
@@ -75,7 +75,7 @@ def ca_create_root_certificate():
       Create the root certificate for the CA.
     """
     try:
-        ca = getCA()
+        ca = CA(rootDir, ca_globals, True)
         ca.createRootCertificate()
     except FileNotFoundError as e:
         print (e)
@@ -87,7 +87,7 @@ def create_intermediate_certificate():
       Create a signed intermediate crtificate.
     """
     try:
-        ca = getCA()
+        ca = CA(rootDir, ca_globals, True)
         ca.createIntermediateCertificate()
     except FileNotFoundError as e:
         print (e)
@@ -97,7 +97,7 @@ def create_intermediate_certificate():
 @click.argument('fqdn')
 def create_domain_key(fqdn):
     try:
-        ca = getCA()
+        ca = CA(rootDir, ca_globals, True)
         ca.createDomainKey(fqdn)
      except FileNotFoundError as e:
         print (e)
@@ -107,7 +107,7 @@ def create_domain_key(fqdn):
 @click.argument('fqdn')
 def sign_csr(fqdn):
     try:
-        ca = getCA()
+        ca = CA(rootDir, ca_globals, True)
     except FileNotFoundError as e:
         print (e)
 
