@@ -46,7 +46,7 @@ class CA():
         'intermediateIndex':       "{}/index".format(subdirs['root_intermediate']['path']),
         'intermediateSerial':      "{}/serial".format(subdirs['root_intermediate']['path']),
         'intermediateKey':         "{}/intermediate-key.pem".format(subdirs['intermediate_private']['path']),
-        'intermediateCertificate': "{}/intermediate.pem".format(subdirs['intermediate_private']['path']),
+        'intermediateCertificate': "{}/intermediate.pem".format(subdirs['intermediate_certs']['path']),
         'intermediateCSR':         "{}/intermediate-csr.pem".format(subdirs['intermediate_csr']['path']),
 
         'CAcertificateChain':      "{}/ca-chain-cert.pem".format(subdirs['intermediate_certs']['path'])
@@ -77,7 +77,7 @@ class CA():
 
 
     def getIntermediateDirectory(self):
-        return self.intermediateDir
+        return self.subdirs['root_intermediate']['path']
 
 
     def getCSR(self):

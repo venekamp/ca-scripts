@@ -6,7 +6,13 @@ from classes.ca import CA
 class Certificate:
     default_root_dir = os.path.abspath("client-certificates")
 
-    root_dir = None
+    subdirs = {
+        'private':      { 'path': "/private", 'mode': 0o700 },
+        'certificates': { 'path': "/certs",   'mode': 0o755 },
+        'csr':          { 'path': "/csr",     'mode': 0o755 },
+        'config':       { 'path': "/config",  'mode': 0o755 }
+    }
+
     fqdn = None
 
     def __init__(self, root_dir, cert_globals, fqdn):
@@ -17,64 +23,56 @@ class Certificate:
 
         if not root_dir:
             if os.path.isdir(os.path.abspath(self.default_root_dir)):
-                self.root_dir = os.path.abspath(self.default_root_dir)
+                root_dir = os.path.abspath(self.default_root_dir)
             else:
                 try:
                     self.ca.CheckForPopulatedCAdirectory()
 
-                    self.root_dir = self.ca.getIntermediateDirectory()
+                    root_dir = self.ca.getIntermediateDirectory()
                 except FileNotFoundError as e:
-                    self.root_dir = Certificate.default_root_dir
-        else:
-            self.root_dir = root_dir
+                    root_dir = Certificate.default_root_dir
 
-        Path(self.getPrivatePath(self.root_dir)).mkdir(parents=True, exist_ok=True)
-        Path(self.getCertsPath(self.root_dir)).mkdir(parents=True, exist_ok=True)
-        Path(self.getCSRPath(self.root_dir)).mkdir(parents=True, exist_ok=True)
+        for key, value in self.subdirs.items():
+            value['path'] = "{}/{}".format(root_dir, value['path'])
+
+        Path(self.getPrivatePath()).mkdir(parents=True, exist_ok=True)
+        Path(self.getCertsPath()).mkdir(parents=True, exist_ok=True)
+        Path(self.getCSRPath()).mkdir(parents=True, exist_ok=True)
 
         self.fqdn = fqdn
 
 
-    def getPrivatePath(self, root_dir):
-        return self.root_dir + "/private"
+    def getPrivatePath(self):
+        return  self.subdirs['private']['path']
 
 
-    def getCertsPath(self, root_dir):
-        return self.root_dir + "/certs"
+    def getCertsPath(self):
+        return self.subdirs['certificates']['path']
 
 
-    def getCSRPath(self, root_dir):
-        return self.root_dir + "/csr"
+    def getCSRPath(self):
+        return self.subdirs['csr']['path']
 
 
     def getConfigName(self):
         """
           return the config name
         """
-        if not self.root_dir:
-            raise TypeError("root_dir has not been assigned properly.")
-
-        return self.root_dir + "/config/" + self.fqdn + ".config"
+        return "{}/{}.config".format(self.subdirs['config']['path'], self.fqdn)
 
 
     def getKeyName(self):
         """
           return the key name
         """
-        if not self.root_dir:
-            raise TypeError("root_dir has not been assigned properly.")
-
-        return self.root_dir + "/private/" + self.fqdn + ".key"
+        return "{}/{}.key".format(self.subdirs['private']['path'], self.fqdn)
 
 
     def getCSRName(self):
         """
           return the csr name
         """
-        if not self.root_dir:
-            raise TypeError("root_dir has not been assigned properly.")
-
-        return self.root_dir + "/csr/" + self.fqdn + ".csr"
+        return "{}/{}.csr".format(self.subdirs['csr']['path'], self.fqdn)
 
 
     def createKey(self, key, keyLength, usePassPhrase):

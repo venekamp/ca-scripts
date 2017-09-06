@@ -78,7 +78,7 @@ def ca_create_root_certificate():
         ca = CA(rootDir, ca_globals)
         ca.createRootCertificate()
     except FileNotFoundError as e:
-        print (e)
+        print(e)
 
 
 @cli.command(name='create-intermediate-certificate')
@@ -90,7 +90,7 @@ def create_intermediate_certificate():
         ca = CA(rootDir, ca_globals)
         ca.createIntermediateCertificate()
     except FileNotFoundError as e:
-        print (e)
+        print(e)
 
 
 @cli.command(name='create-key')
@@ -100,7 +100,7 @@ def create_domain_key(fqdn):
         ca = CA(rootDir, ca_globals)
         ca.createDomainKey(fqdn)
     except FileNotFoundError as e:
-        print (e)
+        print(e)
 
 
 @cli.command('sign-csr')
@@ -116,7 +116,7 @@ def sign_csr(fqdn):
         print(csr)
         #ca.signCSR(config, csr, certificate)
     except FileNotFoundError as e:
-        print (e)
+        print(e)
 
 
 @cli.command()
