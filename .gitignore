@@ -2,6 +2,7 @@
 /virtenvs
 ca_scripts.egg-info
 *.pyc
+tags
 
 # Ignore all but the two config exmple files in the /config
 # direcrory
