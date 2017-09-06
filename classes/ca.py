@@ -189,20 +189,31 @@ class CA():
 
 
     def createCSR(self, config, key, csr):
-        subprocess.run(["openssl", "req",
-                        "-config", config,
-                        "-new", "-sha256",
+        openssl = ["openssl", "req"]
+
+        if config:
+            openssl.extend(["-config", config])
+
+        openssl.extend(["-new", "-sha256",
                         "-key", key,
                         "-out", csr])
+
+        subprocess.run(openssl)
         os.chmod(csr, 0o600)
 
 
     def signCSR(self, config, csr, certificate):
-        subprocess.run(["openssl", "ca", "-config", config,
-                        "-extensions", "v3_intermediate_ca",
+        openssl = ["openssl", "ca"]
+
+        if config:
+            openssl.extend(["-config", config])
+
+        openssl.extend(["-extensions", "v3_intermediate_ca",
                         "-days", "3650", "-notext", "-md", "sha256",
                         "-in", csr,
                         "-out", certificate])
+
+        subprocess.run(openssl)
 
 
     def createIndex(self):

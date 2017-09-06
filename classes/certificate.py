@@ -13,16 +13,18 @@ class Certificate:
         ca_globals = {}
         ca_globals['verbose'] = cert_globals['verbose']
 
-        self.ca = CA(root_dir, ca_globals)
+        self.ca = CA(root_dir, ca_globals, True)
 
         if not root_dir:
-            try:
-                self.ca.CheckForPopulatedCAdirectory()
+            if os.path.isdir(os.path.abspath(self.default_root_dir)):
+                self.root_dir = os.path.abspath(self.default_root_dir)
+            else:
+                try:
+                    self.ca.CheckForPopulatedCAdirectory()
 
-                self.root_dir = self.ca.getIntermediateDirectory()
-            except FileNotFoundError as e:
-                print(e)
-                self.root_dir = Certificate.default_root_dir
+                    self.root_dir = self.ca.getIntermediateDirectory()
+                except FileNotFoundError as e:
+                    self.root_dir = Certificate.default_root_dir
         else:
             self.root_dir = root_dir
 
@@ -52,7 +54,7 @@ class Certificate:
         if not self.root_dir:
             raise TypeError("root_dir has not been assigned properly.")
 
-        return self.root_dir + "/config/" + self.fdqn + ".config"
+        return self.root_dir + "/config/" + self.fqdn + ".config"
 
 
     def getKeyName(self):
@@ -72,8 +74,12 @@ class Certificate:
         if not self.root_dir:
             raise TypeError("root_dir has not been assigned properly.")
 
-        return self.root_dir + "/csr/" + self.fdqn + ".csr.pem"
+        return self.root_dir + "/csr/" + self.fqdn + ".csr"
 
 
-    def createKey(self, key, keyLength, fqdn):
-        pass
+    def createKey(self, key, keyLength, usePassPhrase):
+        self.ca.createKey(key, keyLength, usePassPhrase)
+
+
+    def createCSR(self, config, key, csr):
+        self.ca.createCSR(config, key, csr)

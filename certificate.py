@@ -41,18 +41,19 @@ def create_key(root_dir, key_length, pass_phrase, fqdn):
 
 
 @cli.command('create-csr')
-@click.argument('fdqn')
+@click.option('--config', default=None,
+              help="location of configuration file.")
+@click.argument('fqdn')
 @click.option('--root-dir', default=None,
               help="Set the root directory where the keys and certificates are stored.")
-def create_csr(root_dir, fqdn):
+def create_csr(root_dir, fqdn, config):
     """
       Create a certificate signing request (csr)
     """
-    cert = Certificate(root_dir, fqdn)
+    cert = Certificate(root_dir, cert_globals, fqdn)
 
-    config = cert.getCSRName(root_dir, fqdn)
-    key    = cert.getKeyName(root_dir, fqdn)
-    csr    = cert.getCSRName(root_dir, fqdn)
+    key    = cert.getKeyName()
+    csr    = cert.getCSRName()
 
     cert.createCSR(config, key, csr)
 
