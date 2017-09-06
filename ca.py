@@ -38,8 +38,11 @@ def ca_init(serial_number, root_config_file, intermediate_config_file):
       Args:\n
           CONFIG_FILE: path to the the configuration file of the root CA.
     """
-    ca = CA(rootDir, ca_globals, True)
-    ca.init(root_config_file, intermediate_config_file, serial_number)
+    try:
+        ca = CA(rootDir, ca_globals, True)
+        ca.init(root_config_file, intermediate_config_file, serial_number)
+    except FileNotFoundError as e:
+        print (e)
 
 
 @cli.command(name='create-root-key')
@@ -47,12 +50,11 @@ def ca_create_root_key():
     """
       Create a private key for the usage of the CA.
     """
-    ca = getCA()
-    if ca:
-        try:
-            ca.createRootKey()
-        except FileExistsError as e:
-            print(e)
+    try:
+        ca = getCA()
+        ca.createRootKey()
+    except FileExistsError as e:
+        print(e)
 
 
 @cli.command(name='create-intermediate-key')
@@ -60,12 +62,11 @@ def ca_create_intermediate_key():
     """
       Create a private key for the usage of the CA.
     """
-    ca = getCA()
-    if ca:
-        try:
-            ca.createIntermediateKey()
-        except FileExistsError as e:
-            print(e)
+    try:
+        ca = getCA()
+        ca.createIntermediateKey()
+    except FileExistsError as e:
+        print(e)
 
 
 @cli.command(name='create-root-certificate')
@@ -73,9 +74,11 @@ def ca_create_root_certificate():
     """
       Create the root certificate for the CA.
     """
-    ca = getCA()
-    if ca:
+    try:
+        ca = getCA()
         ca.createRootCertificate()
+    except FileNotFoundError as e:
+        print (e)
 
 
 @cli.command(name='create-intermediate-certificate')
@@ -83,23 +86,32 @@ def create_intermediate_certificate():
     """
       Create a signed intermediate crtificate.
     """
-    ca = getCA()
-    if ca:
+    try:
+        ca = getCA()
         ca.createIntermediateCertificate()
+    except FileNotFoundError as e:
+        print (e)
 
 
 @cli.command(name='create-key')
 @click.argument('fqdn')
 def create_domain_key(fqdn):
-    ca = getCA()
-    if ca:
-        try:
-            ca.createDomainKey(fqdn)
-        except Exception as e:
-            print(e)
+    try:
+        ca = getCA()
+        ca.createDomainKey(fqdn)
+     except FileNotFoundError as e:
+        print (e)
 
 
-@cli.command()
+@cli.command('sign-csr')
+@click.argument('fqdn')
+def sign_csr(fqdn):
+    try:
+        ca = getCA()
+    except FileNotFoundError as e:
+        print (e)
+
+@CheckForPopulatedCAdirectory.command()
 def version():
     """
       Show the version and exit.
@@ -109,16 +121,6 @@ def version():
     version      = pkg_resources.require("ca-scripts")[0].version
 
     click.echo(exec_name + " (" + project_name + "), version " + version)
-
-
-def getCA():
-    try:
-        ca = CA(rootDir, ca_globals)
-        return ca
-    except FileNotFoundError as e:
-        print (e)
-
-    return None
 
 
 if __name__ == "__main__":
