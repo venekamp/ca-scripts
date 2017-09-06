@@ -39,7 +39,7 @@ def ca_init(serial_number, root_config_file, intermediate_config_file):
           CONFIG_FILE: path to the the configuration file of the root CA.
     """
     try:
-        ca = CA(rootDir, ca_globals, True)
+        ca = CA(rootDir, ca_globals, missing_ca_dir_okay=True)
         ca.init(root_config_file, intermediate_config_file, serial_number)
     except FileNotFoundError as e:
         print (e)
@@ -51,7 +51,7 @@ def ca_create_root_key():
       Create a private key for the usage of the CA.
     """
     try:
-        ca = CA(rootDir, ca_globalsd)
+        ca = CA(rootDir, ca_globals)
         ca.createRootKey()
     except FileExistsError as e:
         print(e)
@@ -99,7 +99,7 @@ def create_domain_key(fqdn):
     try:
         ca = CA(rootDir, ca_globals)
         ca.createDomainKey(fqdn)
-     except FileNotFoundError as e:
+    except FileNotFoundError as e:
         print (e)
 
 
@@ -109,11 +109,17 @@ def sign_csr(fqdn):
     try:
         ca = CA(rootDir, ca_globals, fqdn)
 
-   except FileNotFoundError as e:
+        #config      = ca.getConfig()
+        csr         = ca.getCSR()
+        #certificate = ca.getCertificate()
+
+        print(csr)
+        #ca.signCSR(config, csr, certificate)
+    except FileNotFoundError as e:
         print (e)
 
 
-@CheckForPopulatedCAdirectory.command()
+@cli.command()
 def version():
     """
       Show the version and exit.

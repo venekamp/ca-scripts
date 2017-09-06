@@ -35,6 +35,23 @@ class CA():
         'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 }
     }
 
+    files = {
+        'rootConfig':         "/openssl.config",
+        'rootIndex':          "/index.txt",
+        'rootSerial':         "/serial",
+        'rootKey':            "{}/ca-key.pem".format(subdirs['root_private']['path']),
+        'rootCertificate':    "{}/ca-certificate.pem".format(subdirs['root_certs']['path']),
+
+        'intermediateConfig':      "{}/openssl.config".format(subdirs['root_intermediate']['path']),
+        'intermediateIndex':       "{}/index".format(subdirs['root_intermediate']['path']),
+        'intermediateSerial':      "{}/serial".format(subdirs['root_intermediate']['path']),
+        'intermediateKey':         "{}/intermediate-key.pem".format(subdirs['intermediate_private']['path']),
+        'intermediateCertificate': "{}/intermediate.pem".format(subdirs['intermediate_private']['path']),
+        'intermediateCSR':         "{}/intermediate-csr.pem".format(subdirs['intermediate_csr']['path']),
+
+        'CAcertificateChain':      "{}/ca-chain-cert.pem".format(subdirs['intermediate_certs']['path'])
+    }
+
     def __init__(self, rootDir, ca_globals, fqdn=None, missing_ca_dir_okay=False):
         self.fqdn = fqdn
 
@@ -47,29 +64,13 @@ class CA():
         for key, value in self.subdirs.items():
             value['path'] = root_dir + value['path']
 
-        subdirs = self.subdirs
+        for key, value in self.files.items():
+            self.files[key] = root_dir + value
 
-        self.rootConfigFile              = root_dir + '/openssl.config'
-        self.rootIndex                   = root_dir + '/index.txt'
-        self.rootSerialFile              = root_dir + '/serial'
-        self.rootKey                     = subdirs['root_private']['path'] + '/ca-key.pem'
         self.rootKeyLength               = 4096
-        self.rootCertificateFile         = subdirs['root_certs']['path'] + '/ca-certificate.pem'
-
-        self.intermediateConfigFile      = subdirs['root_intermediate']['path'] + '/openssl.config'
-        self.intermediateIndex           = root_dir + '/index.txt'
-        self.intermediateSerialFile      = subdirs['root_intermediate']['path'] + '/serial'
-        self.intermediateKey             = subdirs['intermediate_private']['path'] + '/intermediate-key.pem'
         self.intermediateKeyLength       = 4096
-        self.intermediateCertificateFile = subdirs['intermediate_certs']['path'] + '/intermediate.pem'
-        self.intermediateCSR             = subdirs['intermediate_csr']['path'] + '/intermediate-csr.pem'
-
-        self.CAcertificateChain          = subdirs['intermediate_certs']['path'] + '/ca-chain-cert.pem'
-
         self.verbose                     = ca_globals['verbose']
         self.rootDir                     = root_dir
-        self.intermediateDir             = subdirs['root_intermediate']['path']
-        self.intermediatePrivate         = subdirs['intermediate_private']['path']
 
         if not missing_ca_dir_okay:
             self.CheckForPopulatedCAdirectory()
@@ -79,18 +80,23 @@ class CA():
         return self.intermediateDir
 
 
+    def getCSR(self):
+        if self.fqdn:
+            return self.intermediateCSR + "/" + self.fqdn + ".csr"
+
+
     def CheckForPopulatedCAdirectory(self):
         if not Path(self.rootDir).exists():
             raise FileNotFoundError(errno.ENOENT, "Top level CA directory was not found",
                                     self.rootDir)
         try:
-            self.CheckIfFileExists(self.rootConfigFile)
-            self.CheckIfFileExists(self.rootIndex)
-            self.CheckIfFileExists(self.rootSerialFile)
+            self.CheckIfFileExists(self.files['rootConfig'])
+            self.CheckIfFileExists(self.files['rootIndex'])
+            self.CheckIfFileExists(self.files['rootSerial'])
 
-            self.CheckIfFileExists(self.intermediateConfigFile)
-            self.CheckIfFileExists(self.intermediateIndex)
-            self.CheckIfFileExists(self.intermediateSerialFile)
+            self.CheckIfFileExists(self.files['intermediateConfig'])
+            self.CheckIfFileExists(self.files['intermediateIndex'])
+            self.CheckIfFileExists(self.files['intermediateSerial'])
 
             for key, value in self.subdirs.items():
                 self.CheckIfDirectoryExists(value['path'])
@@ -123,12 +129,12 @@ class CA():
             self.createDirectories()
             self.createIndex()
             self.createInitialSerialNumbers(initialSerialNumber)
-            self.copyConfiguration(rootConfigTemplate, self.rootConfigFile,
+            self.copyConfiguration(rootConfigTemplate, self.files['rootConfig'],
                                    {'root_path': self.rootDir})
             self.copyConfiguration(intermediateConfigTemplate,
-                                   self.intermediateConfigFile,
-                                   {'intermediate_path': self.intermediateDir,
-                                    'intermediate_config': self.intermediateConfigFile})
+                                   self.files['intermediateConfig'],
+                                   {'intermediate_path': self.subdirs['root_intermediate']['path'],
+                                    'intermediate_config': self.files['intermediateConfig']})
         except FileExistsError:
             click.echo("Directory '%s' already exists. Skipping "
                        "initialization." % self.rootDir,
@@ -156,7 +162,7 @@ class CA():
 
     def createRootKey(self, usePassPhrase=True):
         try:
-            self.createKey(self.rootKey, self.rootKeyLength, usePassPhrase)
+            self.createKey(self.files['rootKey'], self.rootKeyLength, usePassPhrase)
         except FileExistsError as e:
             raise FileExistsError(e.errno, "Root key already exists", e.filename)
 
@@ -170,23 +176,23 @@ class CA():
 
 
     def createRootCertificate(self, daysValid=7300):
-        self.createCertificate(self.rootConfigFile, self.rootKey,
-                               self.rootCertificateFile, daysValid)
+        self.createCertificate(self.files['rootConfig'], self.files['rootKey'],
+                               self.files['rootCertificate'], daysValid)
 
 
     def createIntermediateKey(self, usePassPhrase=True):
         try:
-            self.createKey(self.intermediateKey, self.intermediateKeyLength,
+            self.createKey(self.files['intermediateKey'], self.intermediateKeyLength,
                            usePassPhrase)
         except FileExistsError as e:
             raise FileExistsError(e.errno, "Intermediate key already exists", e.filename)
 
 
     def createIntermediateCertificate(self):
-        self.createCSR(self.intermediateConfigFile, self.intermediateKey,
-                       self.intermediateCSR)
-        self.signCSR(self.rootConfigFile, self.intermediateCSR,
-                     self.intermediateCertificateFile)
+        self.createCSR(self.files['intermediateConfig'], self.files['intermediateKey'],
+                       self.files['intermediateCSR'])
+        self.signCSR(self.files['rootConfig'], self.files['intermediateCSR'],
+                     self.files['intermediateCertificate'])
         self.createIntermediateChain()
 
 
@@ -219,8 +225,8 @@ class CA():
 
 
     def createIndex(self):
-        Path(self.rootIndex).touch(mode=0o600)
-        Path(self.intermediateIndex).touch(mode=0o600)
+        Path(self.files['rootIndex']).touch(mode=0o600)
+        Path(self.files['intermediateIndex']).touch(mode=0o600)
 
 
     def createDirectories(self):
@@ -244,8 +250,8 @@ class CA():
         """
           Create the serial files and put the initial serial number in it.
         """
-        self.createSerialNumberFile( self.rootSerialFile, serialNumber )
-        self.createSerialNumberFile( self.intermediateSerialFile, serialNumber )
+        self.createSerialNumberFile(self.files['rootSerial'], serialNumber)
+        self.createSerialNumberFile(self.files['intermediateSerial'], serialNumber)
 
 
     def createSerialNumberFile(self, filename, serialNumber):
@@ -283,12 +289,12 @@ class CA():
 
 
     def createIntermediateChain(self):
-        with open(self.CAcertificateChain, "wb") as f:
-            self.concatenateFiles(self.intermediateCertificateFile, f)
-            self.concatenateFiles(self.rootCertificateFile, f)
+        with open(self.files['CAcertificateChain'], "wb") as f:
+            self.concatenateFiles(self.files['intermediateCertificate'], f)
+            self.concatenateFiles(self.files['rootCertificate'], f)
         f.close()
 
-        os.chmod(self.CAcertificateChain, 0o444)
+        os.chmod(self.files['CAcertificateChain'], 0o444)
 
 
     def concatenateFiles(self, src, out):
