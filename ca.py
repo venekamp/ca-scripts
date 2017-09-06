@@ -111,6 +111,7 @@ def sign_csr(fqdn):
     except FileNotFoundError as e:
         print (e)
 
+
 @CheckForPopulatedCAdirectory.command()
 def version():
     """
