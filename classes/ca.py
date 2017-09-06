@@ -35,7 +35,9 @@ class CA():
         'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 }
     }
 
-    def __init__(self, rootDir, ca_globals, missing_ca_dir_okay=False):
+    def __init__(self, rootDir, ca_globals, fqdn=None, missing_ca_dir_okay=False):
+        self.fqdn = fqdn
+
         #  Add the root diretory to all paths
         if not rootDir:
             root_dir = os.path.abspath(self.default_root_dir)
