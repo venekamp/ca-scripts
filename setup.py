@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name         = 'ca-scripts',
-    version      = '0.2.1',
+    version      = '0.9.0',
     description  = 'CA commandline utility',
     author       = 'Gerben Venekamp',
     author_email = 'venekamp@gmail.com',
