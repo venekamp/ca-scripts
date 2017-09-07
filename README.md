@@ -31,6 +31,9 @@ directories and files.
 ```bash
 ca init <root_config_file> <intermediate_config_file>
 ```
+Template config files:
+- [root_config_file](https://github.com/venekamp/ca-scripts/blob/master/config/examples/openssl_root.config)
+- [intermediate_config_file](https://github.com/venekamp/ca-scripts/blob/master/config/examples/openssl_intermediate.config)
 
 ### Create the root key
 First step after having the correct directory structure and initialized
