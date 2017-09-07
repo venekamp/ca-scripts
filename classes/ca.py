@@ -32,7 +32,8 @@ class CA():
         'intermediate_crl':      { 'path': "/intermediate/crl",      'mode': 0o750 },
         'intermediate_csr':      { 'path': "/intermediate/csr",      'mode': 0o750 },
         'intermediate_newcerts': { 'path': "/intermediate/newcerts", 'mode': 0o750 },
-        'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 }
+        'intermediate_private':  { 'path': "/intermediate/private",  'mode': 0o700 },
+        'intermediate_config':   { 'path': "/intermediate/config",   'mode': 0o700 }
     }
 
     files = {
@@ -43,10 +44,10 @@ class CA():
         'rootCertificate':    "{}/ca-certificate.pem".format(subdirs['root_certs']['path']),
 
         'intermediateConfig':      "{}/openssl.config".format(subdirs['root_intermediate']['path']),
-        'intermediateIndex':       "{}/index".format(subdirs['root_intermediate']['path']),
+        'intermediateIndex':       "{}/index.txt".format(subdirs['root_intermediate']['path']),
         'intermediateSerial':      "{}/serial".format(subdirs['root_intermediate']['path']),
         'intermediateKey':         "{}/intermediate-key.pem".format(subdirs['intermediate_private']['path']),
-        'intermediateCertificate': "{}/intermediate.pem".format(subdirs['intermediate_certs']['path']),
+        'intermediateCertificate': "{}/intermediate-ca.pem".format(subdirs['intermediate_certs']['path']),
         'intermediateCSR':         "{}/intermediate-csr.pem".format(subdirs['intermediate_csr']['path']),
 
         'CAcertificateChain':      "{}/ca-chain-cert.pem".format(subdirs['intermediate_certs']['path'])
@@ -80,9 +81,23 @@ class CA():
         return self.subdirs['root_intermediate']['path']
 
 
-    def getCSR(self):
-        if self.fqdn:
-            return self.intermediateCSR + "/" + self.fqdn + ".csr"
+    def getIntermediateConfigName(self):
+        return self.files['intermediateConfig']
+
+
+    def getConfigName(self):
+        return "{}/{}.config".format(self.subdirs['intermediate_config']['path'],
+                                  self.fqdn)
+
+
+    def getCSRName(self):
+        return "{}/{}.csr".format(self.subdirs['intermediate_csr']['path'],
+                                  self.fqdn)
+
+
+    def getCertificateName(self):
+        return "{}/{}.pem".format(self.subdirs['intermediate_newcerts']['path'],
+                                  self.fqdn)
 
 
     def CheckForPopulatedCAdirectory(self):
@@ -213,7 +228,7 @@ class CA():
     def signCSR(self, config, csr, certificate):
         openssl = ["openssl", "ca"]
 
-        if config:
+        if config and os.path.exists(config):
             openssl.extend(["-config", config])
 
         openssl.extend(["-extensions", "v3_intermediate_ca",
@@ -304,5 +319,6 @@ class CA():
 
 
     def createDomainKey(self, fqdn):
-        key = self.intermediatePrivate + fqdn
+        key = "{}/{}.key".format(self.subdirs['intermediatPrivate']['path'],
+                                 fqdn)
         self.createKey(key, 2048, False)

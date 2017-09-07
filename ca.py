@@ -109,12 +109,11 @@ def sign_csr(fqdn):
     try:
         ca = CA(rootDir, ca_globals, fqdn)
 
-        #config      = ca.getConfig()
-        csr         = ca.getCSR()
-        #certificate = ca.getCertificate()
+        config      = ca.getIntermediateConfigName()
+        csr         = ca.getCSRName()
+        certificate = ca.getCertificateName()
 
-        print(csr)
-        #ca.signCSR(config, csr, certificate)
+        ca.signCSR(config, csr, certificate)
     except FileNotFoundError as e:
         print(e)
 
