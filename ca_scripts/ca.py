@@ -54,25 +54,25 @@ class CA():
         'CAcertificateChain':      "{}/ca-chain-cert.pem".format(subdirs['intermediate_certs']['path'])
     }
 
-    def __init__(self, rootDir, ca_globals, fqdn=None, missing_ca_dir_okay=False):
+    def __init__(self, global_options, fqdn=None, missing_ca_dir_okay=False):
         self.fqdn = fqdn
 
         #  Add the root diretory to all paths
-        if not rootDir:
+        if not global_options.root_dir:
             root_dir = os.path.abspath(self.default_root_dir)
         else:
-            root_dir = rootDir
+            root_dir = global_options.root_dir
 
         for key, value in self.subdirs.items():
-            value['path'] = root_dir + value['path']
+            self.subdirs[key] = { 'path': root_dir + value['path'], 'mode': value['mode'] }
 
         for key, value in self.files.items():
             self.files[key] = root_dir + value
 
-        self.rootKeyLength               = 4096
-        self.intermediateKeyLength       = 4096
-        self.verbose                     = ca_globals['verbose']
-        self.rootDir                     = root_dir
+        self.rootKeyLength         = 4096
+        self.intermediateKeyLength = 4096
+        self.verbose_level         = global_options.verbose_level
+        self.rootDir               = root_dir
 
         if not missing_ca_dir_okay:
             self.CheckForPopulatedCAdirectory()
@@ -251,14 +251,14 @@ class CA():
           directory.
         """
         os.makedirs(self.rootDir)
-        if self.verbose > 0:
+        if self.verbose_level > 0:
             click.secho("Created directory: " + self.rootDir)
 
         for key, subdir in self.subdirs.items():
             path = subdir['path']
             os.makedirs(path)
             os.chmod(path, subdir['mode'])
-            if self.verbose > 0:
+            if self.verbose_level > 0:
                 click.secho("Created directory: " + subdir['path'])
 
 
@@ -324,20 +324,24 @@ class CA():
                                  fqdn)
         self.createKey(key, 2048, False)
 
-ca_globals = {}
-rootDir = os.path.abspath("ca")
+
+class GlobalOptions:
+    def __init__(self, root_dir, verbose_level):
+        self.root_dir = root_dir
+        self.verbose_level = verbose_level
+
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="Set verbosity level.")
-@click.option("--root-dir", default="ca",
+@click.option("--ca-dir", default="ca",
               help="Set root direrectory of the CA. Defaults to: ca")
 @click.version_option()
-def cli(verbose, root_dir):
+@click.pass_context
+def cli(ctx, verbose, ca_dir):
     """
         CA management.
     """
-    ca_globals['verbose']  = verbose
-    ca_globals['root-dir'] = os.path.abspath(root_dir)
+    ctx.obj = GlobalOptions(ca_dir, verbose)
 
 
 @cli.command(name='init')
@@ -348,7 +352,8 @@ def cli(verbose, root_dir):
                 metavar="<root_config_file>")
 @click.argument('intermediate-config-file', type=click.Path(exists=True),
                 metavar="<intermediate_config_file>")
-def ca_init(serial_number, root_config_file, intermediate_config_file):
+@click.pass_obj
+def ca_init(global_options, serial_number, root_config_file, intermediate_config_file):
     """
       Create a root directory if it does not exist and populate it. The
       init command requires one parameter:\n
@@ -357,55 +362,59 @@ def ca_init(serial_number, root_config_file, intermediate_config_file):
           CONFIG_FILE: path to the the configuration file of the root CA.
     """
     try:
-        ca = CA(rootDir, ca_globals, missing_ca_dir_okay=True)
+        ca = CA(global_options, missing_ca_dir_okay=True)
         ca.init(root_config_file, intermediate_config_file, serial_number)
     except FileNotFoundError as e:
         print (e)
 
 
 @cli.command(name='create-root-key')
-def ca_create_root_key():
+@click.pass_obj
+def ca_create_root_key(global_options):
     """
       Create a private key for the usage of the CA.
     """
     try:
-        ca = CA(rootDir, ca_globals)
+        ca = CA(global_options)
         ca.createRootKey()
     except FileExistsError as e:
         print(e)
 
 
 @cli.command(name='create-intermediate-key')
-def ca_create_intermediate_key():
+@click.pass_obj
+def ca_create_intermediate_key(global_options):
     """
       Create a private key for the usage of the CA.
     """
     try:
-        ca = CA(rootDir, ca_globals)
+        ca = CA(global_options)
         ca.createIntermediateKey()
     except FileExistsError as e:
         print(e)
 
 
 @cli.command(name='create-root-certificate')
-def ca_create_root_certificate():
+@click.pass_obj
+def ca_create_root_certificate(global_options):
     """
       Create the root certificate for the CA.
     """
     try:
-        ca = CA(rootDir, ca_globals)
+        ca = CA(global_options)
         ca.createRootCertificate()
     except FileNotFoundError as e:
         print(e)
 
 
 @cli.command(name='create-intermediate-certificate')
-def create_intermediate_certificate():
+@click.pass_obj
+def create_intermediate_certificate(global_options):
     """
       Create a signed intermediate crtificate.
     """
     try:
-        ca = CA(rootDir, ca_globals)
+        ca = CA(global_options)
         ca.createIntermediateCertificate()
     except FileNotFoundError as e:
         print(e)
@@ -413,25 +422,27 @@ def create_intermediate_certificate():
 
 @cli.command(name='create-key')
 @click.argument('fqdn')
-def create_domain_key(fqdn):
+@click.pass_obj
+def create_domain_key(global_options, fqdn):
     try:
-        ca = CA(rootDir, ca_globals)
+        ca = CA(global_options)
         ca.createDomainKey(fqdn)
     except FileNotFoundError as e:
         print(e)
 
 
 @cli.command('sign-csr')
+@click.argument('csr-file')
 @click.argument('fqdn')
-def sign_csr(fqdn):
+@click.pass_obj
+def sign_csr(global_options, csr_file, fqdn):
     try:
-        ca = CA(rootDir, ca_globals, fqdn)
+        ca = CA(global_options, fqdn)
 
         config      = ca.getIntermediateConfigName()
-        csr         = ca.getCSRName()
         certificate = ca.getCertificateName()
 
-        ca.signCSR(config, csr, certificate)
+        ca.signCSR(config, csr_file, certificate)
     except FileNotFoundError as e:
         print(e)
 

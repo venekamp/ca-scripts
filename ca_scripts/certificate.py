@@ -5,6 +5,7 @@ import pkg_resources
 from pathlib import Path
 
 from .ca import CA
+from .ca import GlobalOptions
 
 class Certificate:
     default_root_dir = os.path.abspath("client-certificates")
@@ -18,29 +19,19 @@ class Certificate:
 
     fqdn = None
 
-    def __init__(self, root_dir, cert_globals, fqdn):
-        ca_globals = {}
-        ca_globals['verbose'] = cert_globals['verbose']
+    def __init__(self, global_options, fqdn=None, missing_ca_dir_okay=False):
+        self.ca = CA(global_options, missing_ca_dir_okay=True)
 
-        self.ca = CA(root_dir, ca_globals, True)
-
-        if not root_dir:
-            if os.path.isdir(os.path.abspath(self.default_root_dir)):
-                root_dir = os.path.abspath(self.default_root_dir)
-            else:
-                try:
-                    self.ca.CheckForPopulatedCAdirectory()
-
-                    root_dir = self.ca.getIntermediateDirectory()
-                except FileNotFoundError as e:
-                    root_dir = Certificate.default_root_dir
+        #  Add the root diretory to all paths
+        if not global_options.root_dir:
+            root_dir = os.path.abspath(self.default_root_dir)
+        else:
+            root_dir = global_options.root_dir
 
         for key, value in self.subdirs.items():
-            value['path'] = "{}/{}".format(root_dir, value['path'])
+            self.subdirs[key] = { 'path': root_dir + value['path'], 'mode': value['mode'] }
 
-        Path(self.getPrivatePath()).mkdir(parents=True, exist_ok=True)
-        Path(self.getCertsPath()).mkdir(parents=True, exist_ok=True)
-        Path(self.getCSRPath()).mkdir(parents=True, exist_ok=True)
+        self.ca.subdirs = self.subdirs
 
         self.fqdn = fqdn
 
@@ -86,34 +77,52 @@ class Certificate:
         self.ca.createCSR(config, key, csr)
 
 
-cert_globals = {}
+    def init(self):
+        self.ca.createDirectories()
 
+
+verbose = False
+root_dir = ""
 
 @click.group()
 @click.option("-v", "--verbose", count=True, help="Set verbosity level.")
-@click.option("--ca-dir", default=CA.default_root_dir,
-              help="Set root direrectory of the CA. Defaults to: " + CA.default_root_dir)
+# @click.option("--ca-dir", default=CA.default_root_dir,
+#               help="Set root direrectory of the CA. Defaults to: " + CA.default_root_dir)
 @click.option("--certificate-dir", default=Certificate.default_root_dir,
               help="Set root direrectory of the certificates. Defaults to: " + Certificate.default_root_dir)
 @click.version_option()
-def cli(verbose, ca_dir, certificate_dir):
-    cert_globals['verbose'] = verbose
-    cert_globals['ca-dir']  = os.path.abspath(ca_dir)
+@click.pass_context
+# def cli(ctx, ca_dir, verbose, certificate_dir):
+def cli(ctx, verbose, certificate_dir):
+    ctx.obj = GlobalOptions(certificate_dir, verbose)
+
+
+@cli.command('init')
+# @click.option('--certificate_dir', default=Certificate.default_root_dir,
+#               help="Set the root directory of the certificates. Defaults to: " + Certificate.default_root_dir)
+@click.pass_obj
+def init(global_options):
+    try:
+        certificate = Certificate(global_options, missing_ca_dir_okay=True)
+        certificate.init()
+    except FileNotFoundError as e:
+        print (e)
 
 
 @cli.command('create-key')
-@click.option('--root-dir', default=None,
-              help="Set the root directory where the keys and certificates are stored.")
+# @click.option('--ca-dir', default=None,
+#               help="Set the root directory where the keys and certificates are stored.")
 @click.option('--key-length', default=2048,
               help="Use the specified key length.")
 @click.option('--pass-phrase/--no-pass-phrase', default=False,
               help="Ask for a pass phrase during key generation.")
 @click.argument('fqdn')
-def create_key(root_dir, key_length, pass_phrase, fqdn):
+@click.pass_obj
+def create_key(global_options, key_length, pass_phrase, fqdn):
     """
       create a private key
     """
-    cert = Certificate(root_dir, cert_globals, fqdn)
+    cert = Certificate(global_options, fqdn)
 
     key = cert.getKeyName()
     cert.createKey(key, key_length, pass_phrase)
@@ -123,17 +132,20 @@ def create_key(root_dir, key_length, pass_phrase, fqdn):
 @click.option('--config', default=None,
               help="location of configuration file.")
 @click.argument('fqdn')
-@click.option('--root-dir', default=None,
-              help="Set the root directory where the keys and certificates are stored.")
-def create_csr(root_dir, fqdn, config):
+# @click.option('--ca-dir', default=None,
+#               help="Set the root directory where the keys and certificates are stored.")
+@click.pass_obj
+def create_csr(global_options, fqdn, config):
     """
       Create a certificate signing request (csr)
     """
-    cert = Certificate(root_dir, cert_globals, fqdn)
+    cert = Certificate(global_options, fqdn)
 
-    key    = cert.getKeyName()
-    csr    = cert.getCSRName()
+    key = cert.getKeyName()
+    csr = cert.getCSRName()
 
+    print("key: {}".format(key))
+    print("csr: {}".format(csr))
     cert.createCSR(config, key, csr)
 
 
