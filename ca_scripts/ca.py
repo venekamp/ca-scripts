@@ -4,6 +4,7 @@ import subprocess
 import click
 import shutil
 import errno
+import tarfile
 
 from enum import Enum
 from pathlib import Path
@@ -325,6 +326,32 @@ class CA():
         self.createKey(key, 2048, False)
 
 
+    def getCerts(self):
+        archive_name = self.fqdn + ".tb2"
+
+        with tarfile.open(archive_name, "w:bz2") as tar:
+            if self.verbose_level > 0:
+                click.secho("Creating archive: {}".format(archive_name))
+            files = [
+                {
+                    "path": self.files['CAcertificateChain'],
+                    "alternative": "chain.pem"
+                },
+                {
+                    "path": self.subdirs["intermediate_newcerts"]["path"] + "/" + self.fqdn + ".pem",
+                    "alternative": self.fqdn + ".pem"
+                }
+            ]
+            for name in files:
+                if self.verbose_level > 1:
+                    click.secho("Adding to archive: {} as {}".format(name["path"], name["alternative"]))
+
+                tar.add(name["path"], name["alternative"])
+
+        if self.verbose_level > 0:
+            click.secho("Done")
+
+
 class GlobalOptions:
     def __init__(self, root_dir, verbose_level):
         self.root_dir = root_dir
@@ -445,6 +472,15 @@ def sign_csr(global_options, csr_file, fqdn):
         ca.signCSR(config, csr_file, certificate)
     except FileNotFoundError as e:
         print(e)
+
+
+@cli.command('get-certs')
+@click.argument('fqdn')
+@click.pass_obj
+def get_certs(global_options, fqdn):
+    ca = CA(global_options, fqdn)
+
+    ca.getCerts()
 
 
 @cli.command()
